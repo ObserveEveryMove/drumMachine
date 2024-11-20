@@ -1,168 +1,142 @@
 import React from "react"
-import DrumPad from "./components/DrumPad"
-import Power from "./components/Power"
-import Heater from "./components/Heater"
-import Slide from "./components/Slide"
-import Bank from "./components/Bank"
-
-import sounds from "./data"
-
-
-
+import { v4 as uuid } from "uuid"
+import Form from "./components/Form"
+import List from "./components/List"
 
 
 class App extends React.Component {
+    constructor() {
+        super()
+        this.state = {
+            todos: [],
+            task: "",
 
-   constructor() {
-      super()
-      this.state = {
-         volume: .5,
-         power: false,
-         bank: true,
-         heater: false,
-         soundsArr: Object.keys(sounds),
-         rando: "cymbal1",
-         sound: "",
-      }
+            isEdit: false,
+            editId: "",
+            editTodo: "",
 
-
-
-      this.handleClick = this.handleClick.bind(this)
-      this.handlePower = this.handlePower.bind(this)
-      this.handleVolume = this.handleVolume.bind(this)
-      this.handleBank = this.handleBank.bind(this)
-      this.handleHeater = this.handleHeater.bind(this)
-   }
-
-   componentDidMount() {
-      window.addEventListener("keypress", e => {
-         let button = document.getElementById(e.key.toUpperCase())
-
-         if (button) {
-            const sound = button.dataset.sounds
-            let audio = new Audio(sounds[sound].audioSrc.default)
-            audio.volume = this.state.volume
-            audio.play()
-         }
-      })
-   }
-
-   componentWillUnmount() {
-      window.removeEventListener('keypress', e => {
-         let button = document.getElementById(e.key.toUpperCase())
-         if (button) {
-            const sound = button.dataset.sounds
-            let audio = new Audio(sounds[sound].audioSrc.default)
-            audio.volume = this.state.volume
-            audio.play()
-         }
-      })
-   }
+            doneId: "",
+            isDone: false,
+        }
+        this.handleInput = this.handleInput.bind(this)
+        this.handleSubmit = this.handleSubmit.bind(this)
+        this.handleDelete = this.handleDelete.bind(this)
+        this.getReadyToEdit = this.getReadyToEdit.bind(this)
+        this.handleEdit = this.handleEdit.bind(this)
+        this.handleRadio = this.handleRadio.bind(this)
+    }
 
 
-   handleClick(e) {
+    handleSubmit(e) {
+        e.preventDefault()
+        let todo = {}
+        todo.task = this.state.task
+        todo.id = uuid()
+        this.setState({
+            ...this.state,
+            todos: [todo, ...this.state.todos],
+            task: ""
+        })
+    }
 
-      let { dataset } = e.target
-      // console.log(dataset)
-      const sound = dataset.sounds
-      let audio = new Audio(sounds[sound].audioSrc.default)
-      audio.volume = this.state.volume
-      audio.play()
-      this.setState({
-         heater: false,
-         sound: sound,
-      })
+    handleInput(e) {
+        let { name, value } = e.target
+        this.setState({
+            ...this.state,
+            [name]: value
+        })
+    }
+    getReadyToEdit(todo) {
+        this.setState({
+            ...this.state,
+            isEdit: true,
+            editTodo: todo.task,
+            editId: todo.id,
+        })
+    }
 
-   }
-
-   handlePower() {
-      this.setState({
-         power: !this.state.power,
-      })
-   }
-
-   handleVolume(e) {
-      let { name, value } = e.target
-      this.setState({
-         ...this.state,
-         [name]: value / 100
-      })
-   }
-   handleBank() {
-      this.setState({
-         bank: !this.state.bank
-      })
-   }
-
-
-   handleHeater(e) {
-      let random = Math.floor(Math.random() * 16)
-
-
-      this.setState({
-         ...this.state,
-         rando: this.state.soundsArr[random],
-         heater: true,
-
-      })
-      let { dataset } = e.target
-      const sound = dataset.sounds
-      let audio = new Audio(sounds[sound].audioSrc.default)
-      audio.volume = this.state.volume
-      audio.play()
-
-      console.log(sound)
-      console.log(dataset)
-   }
+    handleDelete(id) {
+        let remove = this.state.todos.filter(todo => todo.id !== id)
+        let theChosenOne = this.state.todos.filter(item => item.id === id)[0]
+        if (theChosenOne.isDone === true) {
+            this.setState({
+                ...this.state,
+                todos: remove,
+                isDone: !this.state.isDone,
+            })
+        }
+        else {
+            alert("Are you done??")
+        }
 
 
-   render() {
+    }
+    handleEdit(e) {
+        e.preventDefault()
+        let change = this.state.todos.map(todo => {
+            if (todo.id === this.state.editId) {
+                todo.task = this.state.editTodo
+            }
+            return todo
+        })
+        this.setState({
+            ...this.state,
+            todos: change,
+            isEdit: false,
+            editId: "",
+            editTodo: "",
+        })
+    }
 
-      console.log()
-      return (
-         <div className="container">
+    handleRadio(id) {
 
-            {!this.state.power && <button className="open" onClick={this.handlePower}>Let's Make Some Sick Beats!! <br /> 🎵🎵🎵🎵</button>}
-            {this.state.power && <dialog open={this.state.power} className="dialog">
-               {this.state.heater && <div> <h2>Sound: {this.state.rando}</h2></div>}
-               {!this.state.heater && <div><h2>Sound: {this.state.sound}</h2></div>}
-               <div id="drum-machine">
-
-                  <div >
-                     <DrumPad
-                        handleClick={this.handleClick}
-                        bank={this.state.bank}
-                        random={this.state.random}
-                        soundsArr={this.state.soundsArr}
-
-                     />
-                  </div>
-
-                  
-                  <div className="mx">
-                     <div className="my">
-                        <Power
-                           handlePower={this.handlePower} />
-                        <Heater
-                           handleHeater={this.handleHeater}
-                           rando={this.state.rando}
-                        />
-                        <Slide
-                           handleVolume={this.handleVolume}
-                           volume={this.state.volume}
-                        />
-                        <Bank
-                           handleBank={this.handleBank} />
+        let findTheOne = this.state.todos.map(todo => {
+            if (todo.id === id) {
+                console.log("todo ", todo)
+                todo.isDone = !todo.isDone
+            }
+            return todo
+        })
+        this.setState({
+            ...this.state,
+            todos: findTheOne
 
 
-                     </div>
-                  </div>
+        })
+    }
 
-               </div>
-            </dialog>}
-         </div>
-      )
-   }
+    render() {
+        return (
+            <div>
+
+                <Form
+                    handleSubmit={this.handleSubmit}
+                    handleInput={this.handleInput}
+                    task={this.state.task}
+
+                />
+
+                <List
+                    todos={this.state.todos}
+                    isEdit={this.state.isEdit}
+                    editId={this.state.editId}
+                    editTodo={this.state.editTodo}
+                    handleInput={this.handleInput}
+                    handleDelete={this.handleDelete}
+                    getReadyToEdit={this.getReadyToEdit}
+                    handleEdit={this.handleEdit}
+                    handleRadio={this.handleRadio}
+                    isDone={this.state.isDone}
+                    done={this.state.done}
+
+                />
+
+
+
+
+            </div>
+        )
+    }
 }
 
 export default App
